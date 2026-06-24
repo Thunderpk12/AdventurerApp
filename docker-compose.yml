@@ -1,0 +1,13 @@
+services:
+  adventurerapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Variáveis EXPO_PUBLIC_ são embutidas no bundle durante o build
+      args:
+        EXPO_PUBLIC_SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL}
+        EXPO_PUBLIC_SUPABASE_ANON_KEY: ${EXPO_PUBLIC_SUPABASE_ANON_KEY}
+    container_name: adventurerapp-web
+    ports:
+      - "3000:80"          # Acede em http://localhost:3000
+    restart: unless-stopped
