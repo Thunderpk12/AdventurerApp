@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@property --num {
+  syntax: "<integer>";
+  initial-value: 0;
+  inherits: false;
+}
+
+@keyframes count {
+  from {
+    --num: var(--start);
+  }
+  to {
+    --num: var(--end);
+  }
+}
+
+.animate-number {
+  animation: count 1s ease-out forwards;
+  counter-reset: num var(--num);
+}
+
+.animate-number::after {
+  content: counter(num);
+}
