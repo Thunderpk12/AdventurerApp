@@ -13,7 +13,7 @@ function GameTabBar({ state, descriptors, navigation }: any) {
     { name: 'index',   icon: '⚔️',  label: 'Home'      },
     { name: 'quests',  icon: '📋',  label: 'Quests'    },
     { name: 'shop',    icon: '🛒',  label: 'Shop'      },
-    { name: 'two',     icon: '🏆',  label: 'Ranks'     },
+    { name: 'leaderboard', icon: '🏆',  label: 'Ranks'     },
     { name: 'profile', icon: '🧙',  label: 'Profile'   },
   ];
 
@@ -80,7 +80,7 @@ export default function TabLayout() {
       <Tabs.Screen name="index"   options={{ title: 'Home'        }} />
       <Tabs.Screen name="quests"  options={{ title: 'Quests'      }} />
       <Tabs.Screen name="shop"    options={{ title: 'Shop'        }} />
-      <Tabs.Screen name="two"     options={{ title: 'Leaderboard' }} />
+      <Tabs.Screen name="leaderboard" options={{ title: 'Leaderboard' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile'     }} />
     </Tabs>
   );

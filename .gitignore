@@ -41,3 +41,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Tailwind generated output (build artifact)
+output.css
+
+# HTML mockups / design files
+modelo.html

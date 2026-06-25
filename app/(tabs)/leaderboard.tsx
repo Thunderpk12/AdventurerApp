@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, ActivityIndicator, Image,
+  View, Text, ScrollView, StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../utils/supabase';
@@ -8,7 +8,18 @@ import { Colors } from '../../constants/Colors';
 import { usePlayerStore } from '../../store/playerStore';
 import { getTitleForLevel } from '../../utils/gamification';
 
-const AVATAR_PLACEHOLDER = 'https://lh3.googleusercontent.com/aida-public/AB6AXuCHVZxbBAw1MZDO54u_X6P655WRbDFzfgp5haeDsIbXuMOo_B5pIwBH_W2b9cFNtigxWRF2yCx1IMSdbzZ1BJ7MpqtIlDNrWOp0xXsHZY4dTD_EatPQSwIk_06fzfWInCfG9eBiSlxYoR28eAXQHLOYYlPEth4BQTG3Odsdp068woiYSFRaER5xvBtjJKnvi6-Z34kIbzZWNi9M7EwW8xbHpsfLxLAPn-biEeZk-6CeONewjkdoXn1_-kBaeHY_OCHb0qPtK0bBT3c';
+// ── Deterministic colour from username (no external image dependency) ────────
+function avatarColorForName(name: string): string {
+  const PALETTE = [
+    '#7C3AED', '#2563EB', '#059669', '#D97706',
+    '#DC2626', '#DB2777', '#0891B2', '#65A30D',
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return PALETTE[Math.abs(hash) % PALETTE.length];
+}
 
 interface LeaderEntry {
   id: string;
@@ -19,16 +30,16 @@ interface LeaderEntry {
 }
 
 const RANK_STYLES: Record<number, { border: string; bg: string; icon: string }> = {
-  0: { border: Colors.secondary, bg: Colors.secondaryContainer + '55', icon: '🥇' },
-  1: { border: Colors.onSurfaceVariant, bg: Colors.surfaceContainerHigh, icon: '🥈' },
-  2: { border: Colors.tertiary, bg: Colors.tertiaryContainer + '33', icon: '🥉' },
+  0: { border: Colors.secondary,          bg: Colors.secondaryContainer + '55', icon: '🥇' },
+  1: { border: Colors.onSurfaceVariant,   bg: Colors.surfaceContainerHigh,       icon: '🥈' },
+  2: { border: Colors.tertiary,           bg: Colors.tertiaryContainer + '33',   icon: '🥉' },
 };
 
 export default function LeaderboardScreen() {
   const { profile } = usePlayerStore();
   const [leaders, setLeaders] = useState<LeaderEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [myRank, setMyRank] = useState<number | null>(null);
+  const [loading, setLoading]   = useState(true);
+  const [myRank, setMyRank]     = useState<number | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -93,8 +104,16 @@ export default function LeaderboardScreen() {
           </View>
         ) : (
           leaders.map((entry, idx) => {
-            const isMe = entry.id === profile?.id;
-            const rankStyle = RANK_STYLES[idx] ?? { border: Colors.surfaceVariant, bg: Colors.surfaceContainerLow, icon: `#${idx + 1}` };
+            const isMe      = entry.id === profile?.id;
+            const rankStyle = RANK_STYLES[idx] ?? {
+              border: Colors.surfaceVariant,
+              bg:     Colors.surfaceContainerLow,
+              icon:   `#${idx + 1}`,
+            };
+            const displayName  = entry.username ?? 'Adventurer';
+            const initial      = displayName.charAt(0).toUpperCase();
+            const avatarColor  = avatarColorForName(displayName);
+
             return (
               <View
                 key={entry.id}
@@ -113,17 +132,22 @@ export default function LeaderboardScreen() {
                   </Text>
                 </View>
 
-                {/* Avatar */}
+                {/* Avatar — iniciais com cor determinística */}
                 <View style={[s.avatarRing, isMe && { borderColor: Colors.primary }]}>
-                  <Image source={{ uri: AVATAR_PLACEHOLDER }} style={s.avatar} />
+                  <View style={[s.avatarInitials, { backgroundColor: avatarColor }]}>
+                    <Text style={s.avatarInitialsText}>{initial}</Text>
+                  </View>
                 </View>
 
                 {/* Info */}
                 <View style={s.info}>
                   <Text style={[s.name, isMe && { color: Colors.primary }]} numberOfLines={1}>
-                    {entry.username ?? 'Adventurer'}{isMe ? ' (You)' : ''}
+                    {displayName}{isMe ? ' (You)' : ''}
                   </Text>
                   <Text style={s.titleText}>{getTitleForLevel(entry.level)}</Text>
+                  {entry.streak > 0 && (
+                    <Text style={s.streakBadge}>🔥 {entry.streak} day streak</Text>
+                  )}
                 </View>
 
                 {/* Stats */}
@@ -173,7 +197,7 @@ const s = StyleSheet.create({
   myRankText: { fontFamily: 'BeVietnamPro_400Regular', fontSize: 13, color: Colors.onSurface },
   myRankNum:  { fontFamily: 'PlusJakartaSans_700Bold', color: Colors.primary },
 
-  centered: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80, gap: 12 },
+  centered:    { alignItems: 'center', justifyContent: 'center', paddingVertical: 80, gap: 12 },
   loadingText: { fontFamily: 'BeVietnamPro_400Regular', fontSize: 13, color: Colors.onSurfaceVariant },
   emptyTitle:  { fontFamily: 'FredokaOne_400Regular', fontSize: 22, color: Colors.onSurface },
   emptySub:    { fontFamily: 'BeVietnamPro_400Regular', fontSize: 13, color: Colors.onSurfaceVariant, textAlign: 'center', paddingHorizontal: 32 },
@@ -203,7 +227,15 @@ const s = StyleSheet.create({
     borderWidth: 2, borderColor: Colors.surfaceVariant,
     overflow: 'hidden',
   },
-  avatar: { width: '100%', height: '100%' },
+  avatarInitials: {
+    width: '100%', height: '100%',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarInitialsText: {
+    fontFamily: 'FredokaOne_400Regular',
+    fontSize: 18,
+    color: '#FFFFFF',
+  },
 
   info: { flex: 1 },
   name: {
@@ -212,10 +244,14 @@ const s = StyleSheet.create({
   titleText: {
     fontFamily: 'BeVietnamPro_400Regular', fontSize: 10, color: Colors.onSurfaceVariant, marginTop: 1,
   },
+  streakBadge: {
+    fontFamily: 'BeVietnamPro_700Bold', fontSize: 9, color: Colors.tertiary,
+    marginTop: 2, letterSpacing: 0.3,
+  },
 
-  stats: { alignItems: 'flex-end' },
-  xp:    { fontFamily: 'FredokaOne_400Regular', fontSize: 16, color: Colors.secondary },
-  xpLabel: { fontFamily: 'BeVietnamPro_700Bold', fontSize: 8, color: Colors.onSurfaceVariant, letterSpacing: 1, textTransform: 'uppercase' },
+  stats:    { alignItems: 'flex-end' },
+  xp:       { fontFamily: 'FredokaOne_400Regular', fontSize: 16, color: Colors.secondary },
+  xpLabel:  { fontFamily: 'BeVietnamPro_700Bold', fontSize: 8, color: Colors.onSurfaceVariant, letterSpacing: 1, textTransform: 'uppercase' },
   levelPill: {
     marginTop: 4,
     backgroundColor: Colors.surfaceContainerHigh,
