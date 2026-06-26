@@ -1,6 +1,11 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { supabase } from '../utils/supabase';
+import { validateEnv } from '../utils/env';
+
+// Validate required environment variables on startup.
+// Throws in development if any EXPO_PUBLIC_* vars are missing.
+validateEnv();
 import { useAuthStore } from '../store/authStore';
 import { usePlayerStore } from '../store/playerStore';
 import { useBossStore } from '../store/bossStore';
